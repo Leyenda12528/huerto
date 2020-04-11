@@ -54,24 +54,29 @@ def private(data_usuario):
 
 #------------------------------------- GET PLANTAS
 @app.route('/plantas')
-#@token_requeried
+@token_requeried
 def getPlantas(data_usuario):
+    Plantas = []    
     cursor = mysql.connection.cursor()
-    cursor.execute("select * from plantas")
-    data = cursor.fetchall()
-    Plantas = []
-    for dato in data:
 
-        Plantas.append(
-            {
-                "ID" : dato['id'],
-                "nombre" : dato['nombre'],
-                "descripcion" : dato['descripcion'],
-                "tipo_tierra" : dato['tipo_tierra'],
-                "historico": ast.literal_eval(dato['historico'])
-            }
-        )
+    cursor.execute("select * from usuarios_planta where id_usuario = %s",(int(data_usuario['ID']),))
+    dataP = cursor.fetchall()
+    for planta in dataP:
+        cursor.execute("select * from plantas where id = %s ", (int(planta['id_planta']),))
+        data = cursor.fetchall()
+        for dato in data:
+            Plantas.append(
+                {
+                    "ID" : dato['id'],
+                    "nombre" : dato['nombre'],
+                    "descripcion" : dato['descripcion'],
+                    "tipo_tierra" : dato['tipo_tierra'],
+                    "historico": ast.literal_eval(dato['historico'])
+                }
+            )
+
     return jsonify({'result': Plantas})
+
 #------------------------------------- SET PLANTA
 @app.route('/plantas', methods=['POST'])
 @token_requeried
