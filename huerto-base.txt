@@ -1,25 +1,25 @@
 
 CREATE TABLE usuarios(
     id INT PRIMARY KEY AUTO_INCREMENT,
-    usuario VARCHAR(50),
-    pass VARCHAR(250),
-    estatus INT
+    usuario VARCHAR(50) NOT NULL,
+    pass VARCHAR(250) NOT NULL,
+    estatus INT default current_timestamp
 ); 
-CREATE TABLE planta(
+CREATE TABLE plantas(
     id INT PRIMARY KEY AUTO_INCREMENT,
-    nombre VARCHAR(100),
-    descripcion VARCHAR(300),
-    tipo_tierra VARCHAR(100),
-    historico text,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(300) NOT NULL,
+    tipo_tierra VARCHAR(100) NOT NULL,
+    historico text NOT NULL,
     estatus INT,
     created_at DATETIME DEFAULT NOW()
 );
 
-CREATE TABLE usuarios_planta(
+CREATE TABLE usuarios_plantas(
     id_usuario INT,
     id_planta INT,
     FOREIGN KEY(id_usuario) REFERENCES usuarios(id),
-    FOREIGN KEY(id_planta) REFERENCES planta(id)
+    FOREIGN KEY(id_planta) REFERENCES plantas(id)
 )
 
 /------------------------------------------------------
@@ -33,3 +33,24 @@ CREATE TABLE historico(
     luz_solar VARCHAR(20),
     FOREIGN KEY(id_planta) REFERENCES planta(id)
 );
+------------------------------------------------------------
+------------------------------------------------------------
+{
+	"nombre" : "planta1",
+	"descripcion" : "testing -  planta",
+	"tipo_tierra" : "tierra roja",
+	"historico" : [
+		{
+			"fecha" : "2020-04-10 18:52:00",
+			"temperatura" : "75º",
+			"humedad" : "76",
+			"luz_solar" : "25"
+		},
+		{
+			"fecha" : "2020-04-10 19:00:00",
+			"temperatura" : "64º",
+			"humedad" : "85",
+			"luz_solar" : "35"
+		}
+	]
+}
