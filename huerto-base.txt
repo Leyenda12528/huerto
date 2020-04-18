@@ -15,7 +15,7 @@ CREATE TABLE plantas(
     created_at DATETIME DEFAULT NOW()
 );
 
-CREATE TABLE usuarios_plantas(
+CREATE TABLE usuarios_planta(
     id_usuario INT,
     id_planta INT,
     FOREIGN KEY(id_usuario) REFERENCES usuarios(id),

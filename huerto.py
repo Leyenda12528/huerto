@@ -105,8 +105,9 @@ def setPlanta(data_usuario):
 
 #------------------------------------- REGISTER
 @app.route('/register', methods=['POST'])
-@token_requeried
-def register(data_usuario):
+#@token_requeried
+#def register(data_usuario):
+def register():
     if not request.json:
         return jsonify({'result': 'no json'})
     usuario = request.json.get('usuario', None)
