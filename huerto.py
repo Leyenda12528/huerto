@@ -30,7 +30,7 @@ def token_requeried(f):
             #token = request.headers['x-access-token']
         token = request.args.get('token')
         if not token:
-            return jsonify({'result': 'falta Token'}), 401
+            return jsonify({'result': 'falta Token', 'valid' : False}), 401
         try:
             data_token = jwt.decode(token, app.config['SECRET_KEY'])
             #cursor = mysql.connection.cursor()
@@ -38,7 +38,7 @@ def token_requeried(f):
             #data_base = cursor.fetchone()
             data_usuario = data_token
         except:
-            return jsonify({'result': 'Token inválido'}), 401
+            return jsonify({'result': 'Token inválido', 'valid' : False}), 401
         return f(data_usuario, *args, **kwargs)
         #return f(*args, **kwargs)
     return decorated
@@ -75,21 +75,21 @@ def getPlantas(data_usuario):
                 }
             )
 
-    return jsonify({'result': Plantas})
+    return jsonify({'result': Plantas, 'valid' : True})
 
 #------------------------------------- SET PLANTA
 @app.route('/plantas', methods=['POST'])
 @token_requeried
 def setPlanta(data_usuario):
     if not request.json:
-        return jsonify({'result': 'no json'})
+        return jsonify({'result': 'no json', 'valid' : False})
     nombre = request.json.get('nombre', None)
     descripcion = request.json.get('descripcion', None)
     tipo_tierra = request.json.get('tipo_tierra', None)
     historico = request.json.get('historico', None)
 
     if nombre is None or descripcion is None or historico is None:
-        return jsonify({'result': 'faltan parámentros'})
+        return jsonify({'result': 'faltan parámentros', 'valid' : False})
 
     #print(historico[0]['fecha'])
     #return "----------"
@@ -98,6 +98,7 @@ def setPlanta(data_usuario):
     cursor.execute("insert into usuarios_planta (id_usuario, id_planta) values(%s, %s)", (data_usuario['ID'], cursor.lastrowid))
     mysql.connection.commit()
     return jsonify({
+        'valid' : True,
         'planta': nombre,
         'result': 'Ingresado exitosamente'
     })
@@ -109,48 +110,76 @@ def setPlanta(data_usuario):
 #def register(data_usuario):
 def register():
     if not request.json:
-        return jsonify({'result': 'no json'})
+        return jsonify({'result': 'no json', 'valid' : False})
     usuario = request.json.get('usuario', None)
     password = request.json.get('password', None)
     if usuario is None or password is None:
-        return jsonify({'result': 'faltan parámentros'})
+        return jsonify({'result': 'faltan parámentros', 'valid' : False})
 
     cursor = mysql.connection.cursor()
     usuario = request.get_json()['usuario']
-    password = bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
-    cursor.execute("insert into usuarios (usuario, pass, estatus) values (%s, %s, %s)", (usuario, password, 1))
-    mysql.connection.commit()
-    return jsonify({
-        'usuario': request.json['usuario'],
-        'result': 'Ingresado exitosamente'
-    })
+    cursor.execute("select usuario from usuarios")
+    senl = 0
+    for dato in cursor.fetchall():
+        if dato['usuario'] == usuario:
+            senl = 1
+            break
+    if senl == 0:
+        password = bcrypt.generate_password_hash(request.get_json()['password']).decode('utf-8')
+        cursor.execute("insert into usuarios (usuario, pass, estatus) values (%s, %s, %s)", (usuario, password, 1))
+        mysql.connection.commit()
+        resp = {
+            'valid' : True,
+            'result': 'Ingresado exitosamente',
+            'usuario': request.json['usuario']
+        }
+    else:
+        resp = {
+            'valid' : False,
+            'result' : 'Usuario existente'
+        }
+
+    return jsonify(resp)
 
 #------------------------------------- LOGIN
 @app.route("/login", methods=['POST'])
 def login():
     if not request.json:
-        return jsonify({'result': 'no json'})
+        return jsonify({'result': 'no json', 'valid' : False})
     usuario = request.json.get('usuario', None)
     password = request.json.get('password', None)
     if usuario is None or password is None:
-        return jsonify({'result': 'faltan parámentros'})
+        return jsonify({'result': 'faltan parámentros', 'valid' : False})
 
     cursor = mysql.connection.cursor()
     cursor.execute("select * from usuarios where usuario = %s", (usuario,))
     data = cursor.fetchone()
-    if bcrypt.check_password_hash(data['pass'], password):
-        token = jwt.encode(
-            {
-                'ID' : data['id'],
-                'user': usuario,
-                'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(minutes=5)
-            },
-            app.config['SECRET_KEY']
-        )
-        return jsonify({'token': token.decode('utf-8')})
+    if data:
+        if bcrypt.check_password_hash(data['pass'], password):
+            token = jwt.encode(
+                {
+                    'ID' : data['id'],
+                    'user': usuario,
+                    'iat': datetime.utcnow(),
+                    'exp': datetime.utcnow() + timedelta(minutes=5)
+                },
+                app.config['SECRET_KEY']
+            )
+            resp = {
+                'valid' : True,
+                'token': token.decode('utf-8')
+            }
+        else:
+            resp = {
+                'valid' : False,
+                'result': 'Password Incorrect'
+            }
     else:
-        return jsonify({'result': 'User / Password Incorrect'})
+        resp = {
+            'valid' : False,
+            'result': 'User Incorrect'
+        }
+    return jsonify(resp)
 
 if __name__ == '__main__':
     app.run(debug = True)
