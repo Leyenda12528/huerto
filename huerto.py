@@ -172,12 +172,12 @@ def login():
         else:
             resp = {
                 'valid' : False,
-                'result': 'Password Incorrect'
+                'result': 'Password'
             }
     else:
         resp = {
             'valid' : False,
-            'result': 'User Incorrect'
+            'result': 'User'
         }
     return jsonify(resp)
 
