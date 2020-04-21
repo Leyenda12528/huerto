@@ -47,10 +47,10 @@ def token_requeried(f):
 def public():
     return "view public"
 
-@app.route('/private')
+@app.route('/validateToken')
 @token_requeried
 def private(data_usuario):
-    return "view private "+str(data_usuario['usuario'])
+    return jsonify({'result': 'Token válido', 'valid' : True})
 
 #------------------------------------- GET PLANTAS
 @app.route('/plantas')
