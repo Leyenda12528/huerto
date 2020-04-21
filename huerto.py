@@ -161,7 +161,7 @@ def login():
                     'ID' : data['id'],
                     'user': usuario,
                     'iat': datetime.utcnow(),
-                    'exp': datetime.utcnow() + timedelta(minutes=5)
+                    'exp': datetime.utcnow() + timedelta(hours=1)
                 },
                 app.config['SECRET_KEY']
             )
