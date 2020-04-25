@@ -98,10 +98,7 @@ def getPlanta(data_usuario):
             "tipo_tierra" : dato['tipo_tierra'],
             "historico": ast.literal_eval(dato['historico'])
         }
-        resp = {
-            'valid' : True,
-            'result': Planta
-        }
+        resp = Planta
     else:
         resp = {
             'valid' : False,
@@ -131,16 +128,12 @@ def setPlanta(data_usuario):
     cursor.execute("insert into usuarios_planta (id_usuario, id_planta) values(%s, %s)", (data_usuario['ID'], cursor.lastrowid))
     mysql.connection.commit()
     return jsonify({
-        'valid' : True,
-        'planta': {
-            "ID" : ID,
-            "nombre" : nombre,
-            "descripcion" : descripcion,
-            "tipo_tierra" : descripcion,
-            "historico": historico,
-            "estatus": 1
-        },
-        'result': 'Ingresado exitosamente'
+        "ID" : ID,
+        "nombre" : nombre,
+        "descripcion" : descripcion,
+        "tipo_tierra" : descripcion,
+        "historico": historico,
+        "estatus": 1
     })
 #------------------------------------- 
 
