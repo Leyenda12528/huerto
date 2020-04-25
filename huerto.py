@@ -76,6 +76,38 @@ def getPlantas(data_usuario):
             )
 
     return jsonify({'result': Plantas, 'valid' : True})
+#------------------------------------- GET PLANTA
+@app.route('/planta')
+@token_requeried
+def getPlanta(data_usuario):
+    if not request.json:
+        return jsonify({'result': 'no json', 'valid' : False})
+    id_planta = request.json.get('idPlanta', None)
+    if id_planta is None:
+        return jsonify({'result': 'falta parámentro', 'valid' : False})
+    Planta = {}
+    cursor = mysql.connection.cursor()
+
+    cursor.execute("select * from plantas where id = %s ", (id_planta,))
+    dato = cursor.fetchone()
+    if dato:
+        Planta = {
+            "ID" : dato['id'],
+            "nombre" : dato['nombre'],
+            "descripcion" : dato['descripcion'],
+            "tipo_tierra" : dato['tipo_tierra'],
+            "historico": ast.literal_eval(dato['historico'])
+        }
+        resp = {
+            'valid' : True,
+            'result': Planta
+        }
+    else:
+        resp = {
+            'valid' : False,
+            'result': 'No existe planta'
+        }
+    return jsonify(resp)
 
 #------------------------------------- SET PLANTA
 @app.route('/plantas', methods=['POST'])
@@ -95,11 +127,19 @@ def setPlanta(data_usuario):
     #return "----------"
     cursor = mysql.connection.cursor()
     cursor.execute("insert into plantas (nombre, descripcion, tipo_tierra, historico, estatus) values(%s, %s, %s, %s, %s)", (nombre, descripcion, tipo_tierra, str(historico), 1))
+    ID = cursor.lastrowid
     cursor.execute("insert into usuarios_planta (id_usuario, id_planta) values(%s, %s)", (data_usuario['ID'], cursor.lastrowid))
     mysql.connection.commit()
     return jsonify({
         'valid' : True,
-        'planta': nombre,
+        'planta': {
+            "ID" : ID,
+            "nombre" : nombre,
+            "descripcion" : descripcion,
+            "tipo_tierra" : descripcion,
+            "historico": historico,
+            "estatus": 1
+        },
         'result': 'Ingresado exitosamente'
     })
 #------------------------------------- 
