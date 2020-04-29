@@ -185,6 +185,28 @@ def updateUser(data_usuario):
             'result': 'User'
         }
     return jsonify(resp)
+#------------------------------------- PREDICCION
+@app.route('/prediccion/<int:id_planta>/<int:dias>')
+@token_requeried
+def prediccion(data_usuario, id_planta, dias):
+    Planta = {}
+    cursor = mysql.connection.cursor()
+
+    cursor.execute("select * from plantas where id = %s ", (id_planta,))
+    dato = cursor.fetchone()
+    if dato:
+        Planta = {
+            "Temperatura": (0.027067669)*(dias)+21.9091228,
+            "Humedad": (-0.26383208)*(dias)+57.4807368,
+            "Lux_solar": (-0.027669173)*(dias)+13.6505263,
+        }
+        resp = Planta
+    else:
+        resp = {
+            'valid' : False,
+            'result': 'No existe planta'
+        }
+    return jsonify(resp)
 #------------------------------------- 
 
 #------------------------------------- REGISTER
