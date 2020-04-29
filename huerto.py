@@ -77,14 +77,9 @@ def getPlantas(data_usuario):
 
     return jsonify({'result': Plantas, 'valid' : True})
 #------------------------------------- GET PLANTA
-@app.route('/planta')
+@app.route('/planta/<int:id_planta>')
 @token_requeried
-def getPlanta(data_usuario):
-    if not request.json:
-        return jsonify({'result': 'no json', 'valid' : False})
-    id_planta = request.json.get('idPlanta', None)
-    if id_planta is None:
-        return jsonify({'result': 'falta parámentro', 'valid' : False})
+def getPlanta(data_usuario, id_planta):
     Planta = {}
     cursor = mysql.connection.cursor()
 
