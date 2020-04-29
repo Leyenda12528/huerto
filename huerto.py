@@ -154,7 +154,37 @@ def updatePlanta(data_usuario,id_planta):
             'result': 'No existe planta'
         }
     return jsonify(resp)
-        
+#------------------------------------- UPDATE CONTRASEÑA
+@app.route('/user', methods=['PUT'])
+@token_requeried
+def updateUser(data_usuario):
+    if not request.json:
+        return jsonify({'result': 'no json', 'valid' : False})
+    passwordNew = request.json.get('passwordNew', None)
+    passwordOld = request.json.get('passwordOld', None)
+    if passwordNew is None or passwordOld is None:
+        return jsonify({'result': 'faltan parámentros', 'valid' : False})
+    cursor = mysql.connection.cursor()
+    cursor.execute("select * from usuarios where usuario = %s", (data_usuario['user'],))
+    data = cursor.fetchone()
+    if data:
+        if bcrypt.check_password_hash(data['pass'], passwordOld):
+            password = bcrypt.generate_password_hash(passwordNew).decode('utf-8')
+            cursor.execute("update usuarios set pass = %s where id = %s", (password, data_usuario['ID']))
+            mysql.connection.commit()
+            resp = {
+                'valid' : True,
+            }
+        else:
+            resp = {
+                'result': 'Contraseña Incorrecta'
+            }
+    else:
+        resp = {
+            'valid' : False,
+            'result': 'User'
+        }
+    return jsonify(resp)
 #------------------------------------- 
 
 #------------------------------------- REGISTER
