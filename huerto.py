@@ -195,10 +195,14 @@ def prediccion(data_usuario, id_planta, dias):
     cursor.execute("select * from plantas where id = %s ", (id_planta,))
     dato = cursor.fetchone()
     if dato:
+        Temperatura = (0.027067669)*(dias)+21.9091228
+        Humedad = (-0.26383208)*(dias)+57.4807368
+        Lux_solar = (-0.027669173)*(dias)+13.6505263
         Planta = {
-            "Temperatura": (0.027067669)*(dias)+21.9091228,
-            "Humedad": (-0.26383208)*(dias)+57.4807368,
-            "Lux_solar": (-0.027669173)*(dias)+13.6505263,
+            "Temperatura": Temperatura,
+            "Humedad": Humedad,
+            "Lux_solar": Lux_solar,
+            "Valoracion": valorar(dato['tipo_tierra'], Humedad)
         }
         resp = Planta
     else:
@@ -207,6 +211,52 @@ def prediccion(data_usuario, id_planta, dias):
             'result': 'No existe planta'
         }
     return jsonify(resp)
+def valorar(dato, dato2):
+    if dato == "Arenoso":
+        if dato2 >= 9:
+            valor = "Planta esta recibiendo mucho calor"
+        elif dato2 >= 8 and dato2 < 9:
+            valor = "Planta posee poca humedad"
+        elif dato2 >= 7 and dato2 < 8 :
+            valor = "Planta en buen estado"
+        elif dato2 > 2 and dato2 < 7:
+            valor = "Planta en peligro de marchitarse"
+        elif dato <= 2:
+            valor = "Planta en mal estado"
+    elif dato == "Franco":
+        if dato2 >= 34:
+            valor = "Planta esta recibiendo mucho calor"
+        elif dato2 >= 23 and dato2 < 34 :
+            valor = "Planta posee poca humedad"
+        elif dato2 >= 22 and dato2 < 23 :
+            valor = "Planta en buen estado"
+        elif dato2 > 12 and dato2 < 22:
+            valor = "Planta en peligro de marchitarse"
+        elif dato <= 12:
+            valor = "Planta en mal estado"
+    elif dato == "Arcilloso":
+        if dato2 >= 38:
+            valor = "Planta esta recibiendo mucho calor"
+        elif dato2 >= 25 and dato2 < 38:
+            valor = "Planta posee poca humedad"
+        elif dato2 >= 24 and dato2 < 25 :
+            valor = "Planta en buen estado"
+        elif dato2 > 20 and dato2 < 24:
+            valor = "Planta en peligro de marchitarse"
+        elif dato <= 20:
+            valor = "Planta en mal estado"
+    else:
+        if dato2 >= 29:
+            valor = "Planta esta recibiendo mucho calor"
+        elif dato2 >= 20 and dato2 < 29:
+            valor = "Planta posee poca humedad"
+        elif dato2 >= 19 and dato2 < 20 :
+            valor = "Planta en buen estado"
+        elif dato2 > 10 and dato2 < 19:
+            valor = "Planta en peligro de marchitarse"
+        elif dato <= 10:
+            valor = "Planta en mal estado"
+    return valor
 #------------------------------------- 
 
 #------------------------------------- REGISTER
