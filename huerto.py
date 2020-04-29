@@ -130,6 +130,31 @@ def setPlanta(data_usuario):
         "historico": historico,
         "estatus": 1
     })
+#------------------------------------- UPDATE PLANTA
+@app.route('/planta/<int:id_planta>', methods=['PUT'])
+@token_requeried
+def updatePlanta(data_usuario,id_planta):
+    historico = request.json.get('historico', None)
+    if historico is None:
+        return jsonify({'result': 'faltan parámentros', 'valid' : False})
+    cursor = mysql.connection.cursor()
+
+    cursor.execute("select * from plantas where id = %s ", (id_planta,))
+    dato = cursor.fetchone()
+    if dato:
+        cursor = mysql.connection.cursor()
+        cursor.execute("update plantas set historico = %s where id = %s", (str(historico), id_planta))
+        mysql.connection.commit()
+        resp = {
+            'result': True
+        }
+    else:
+        resp = {
+            'valid' : False,
+            'result': 'No existe planta'
+        }
+    return jsonify(resp)
+        
 #------------------------------------- 
 
 #------------------------------------- REGISTER
