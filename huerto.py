@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, json
 from flask_mysqldb import MySQL
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import JWTManager
@@ -8,6 +8,9 @@ from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_r
 from functools import wraps
 import jwt
 import ast
+from scipy.interpolate import lagrange
+import numpy as np
+import random
 
 app = Flask(__name__)
 app.config['MYSQL_USER'] = 'root'
@@ -189,28 +192,19 @@ def updateUser(data_usuario):
 @app.route('/prediccion/<int:id_planta>/<int:dias>')
 @token_requeried
 def prediccion(data_usuario, id_planta, dias):
-    Planta = {}
     cursor = mysql.connection.cursor()
 
     cursor.execute("select * from plantas where id = %s ", (id_planta,))
     dato = cursor.fetchone()
     if dato:
-        Temperatura = (0.027067669)*(dias)+21.9091228
         Humedad = (-0.26383208)*(dias)+57.4807368
-        Lux_solar = (-0.027669173)*(dias)+13.6505263
-        Planta = {
-            "Temperatura": Temperatura,
-            "Humedad": Humedad,
-            "Lux_solar": Lux_solar,
-            "Valoracion": valorar(dato['tipo_tierra'], Humedad)
-        }
-        resp = Planta
+        resp = valorar(dato['tipo_tierra'], Humedad)
     else:
         resp = {
             'valid' : False,
             'result': 'No existe planta'
         }
-    return jsonify(resp)
+    return resp
 def valorar(dato, dato2):
     if dato == "Arenoso":
         if dato2 >= 9:
@@ -257,7 +251,70 @@ def valorar(dato, dato2):
         elif dato <= 10:
             valor = "Planta en mal estado"
     return valor
-#------------------------------------- 
+
+#------------------------------------- PREDICCIONREAL
+@app.route('/predicciones/<int:id_planta>/<int:dias>')
+@token_requeried
+def predicciones(data_usuario, id_planta, dias):
+    
+    cursor = mysql.connection.cursor()
+
+    cursor.execute("select * from plantas where id = %s ", (id_planta,))
+    planta = cursor.fetchone()
+    if planta:
+        valor = ast.literal_eval(planta['historico'])
+        historico = formulas(valor, dias)
+        resp = historico
+    else:
+        resp = {
+            'valid' : False,
+            'result': 'No existe planta'
+        }
+    return jsonify(resp)
+#----------------------------------------------------------------------------------------------------------------------
+def formulas(historico, dias):
+    print("-"*100)
+    cantidad = len(historico)
+    x = [xvalor for xvalor in range(1, cantidad + 1)]
+    # y1 - Humedad
+    # y2 - temperatura 
+    # y3 - luz_solar
+    y1 = []
+    y2 = []
+    y3 = []
+    for dato in historico:
+        y1.append(dato['humedad'])
+        y2.append(dato['temperatura'])
+        y3.append(dato['luz_solar'])
+    c1 = lagrange(x,y1)
+    c2 = lagrange(x,y2)
+    c3 = lagrange(x,y3)
+
+    xx = np.linspace(1, cantidad, dias)
+    
+    yy1 = c1(xx)
+    yy2 = c2(xx)
+    yy3 = c3(xx)
+    print("*"*50)
+    print(yy1)
+    print("*"*50)
+    yy1 = [ valor + (random.randint(-5, 5)) if valor > 10 else valor + (random.randint(-2, 2)) for valor in yy1]
+    print(yy1)
+    print("*"*50)
+
+    NHistorico = []
+    for histori in range(1, dias + 1):
+        NHistorico.append(
+            {
+                'fecha': str(date.today() + timedelta(days = histori)),
+                'humedad': yy1[histori-1],
+                'temperatura': yy2[histori-1],
+                'luz_solar': yy3[histori-1]
+            }
+        )    
+    print("-"*100)
+    return NHistorico
+#----------------------------------------------------------------------------------------------------------------------
 
 #------------------------------------- REGISTER
 @app.route('/register', methods=['POST'])
